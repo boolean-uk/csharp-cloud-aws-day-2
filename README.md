@@ -1,10 +1,10 @@
-# C# Cloud AWS Day One
+# C# Cloud AWS - Day Two
 
 ## Learning Objectives
 
-- Understand how to deploy an API to AWS Elastic Beanstalk
-- Understand how to spin up an AWS PostgreSQL instance
-- Host frontend static files on AWS S3
+- Understand how to set up an EC2 instance to host a backend application
+- Learn basic networking and create a VPC, including setting up an API Gateway to expose endpoints
+- Introduction to AWS Identity and Access Management (IAM) and policies
 
 ## Instructions
 
@@ -13,157 +13,77 @@
 
 # Core Activity
 
-## Set Up Amazon RDS for PostgreSQL
+## Set Up Amazon EC2 for Backend Application
 ### Steps
-1. **Create an RDS Instance:**
-   - Open the AWS Management Console and navigate to the RDS service.
-   - Click "Create database."
-   - Choose the "Standard Create" option.
-   - Select the PostgreSQL engine.
-   - Configure the DB instance settings (DB instance identifier, master username, password).
-   - Choose the instance type and allocated storage.
-   - Click "Create database."
 
-2. **Configure Database Connectivity:**
-   - After the database is created, navigate to the "Connectivity & security" tab.
-   - Note the "Endpoint" and "Port."
-   - Configure the security group to allow access from your Elastic Beanstalk environment.
+1. **Create an EC2 Instance:**
+   - Open the AWS Management Console and navigate to the EC2 service.
+   - Click "Launch Instance."
+   - Choose an Amazon Machine Image (AMI), such as Amazon Linux 2 or Ubuntu Server.
+   - Select an instance type (e.g., t2.micro for free-tier).
+   - Configure instance details, ensuring that it’s deployed into the correct VPC and subnet.
+   - Add storage if necessary, or proceed with default settings.
+   - Configure security group settings to allow HTTP, HTTPS, and SSH access.
+   - Click "Launch" and select or create a new key pair to access the instance.
+   
+2. **Connect to the EC2 Instance:**
+   - After the instance is running, click "Connect."
+   - Use the provided SSH command to access the instance from your terminal:
+   ```bash
+   ssh -i "your-key.pem" ec2-user@your-ec2-public-ip
+   ```
+   - Install necessary dependencies (e.g., .NET SDK, Nginx, or any other server you require for your backend).
 
-3. **Update `appsettings.json`:**
-```json
-   "ConnectionStrings": {
-       "DefaultConnection": "Host=mydbinstance.endpoint;Database=mydatabase;Username=myadmin;Password=mypassword"
-   }
-```
-4. **Add Required Packages:**
-   - Add Packages to Solution
-```bash
-dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
-dotnet add package Microsoft.EntityFrameworkCore.Tools
-```
+3. **Deploy Your Backend Application:**
+   - Use `scp` or another file transfer method to upload your backend application files to the EC2 instance:
+   ```bash
+   scp -i "your-key.pem" MyApi.zip ec2-user@your-ec2-public-ip:/home/ec2-user/
+   ```
+   - SSH into the instance and extract your backend files:
+   ```bash
+   unzip MyApi.zip
+   ```
+   - Start the application using the appropriate commands (for .NET Core):
+   ```bash
+   dotnet MyApi.dll
+   ```
 
-5. **Configure DbContext in Startup.cs:**
-   - Update `Startup.cs`
-```csharp
-services.AddDbContext<MyDbContext>(options =>
-    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-```
-
-6. **Create DB Context and Model:**
-   - Create own DB Context and model. Example Below
-```csharp
-public class MyModel
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-}
-
-public class MyDbContext : DbContext
-{
-    public MyDbContext(DbContextOptions<MyDbContext> options) : base(options) { }
-
-    public DbSet<MyModel> MyModels { get; set; }
-}
-```
-
-7. **Apply Entity Framework Migrations:**
-   - To Run EntityFramework migration use the commands below
-```bash
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-```
-
-## Deploy Backend API
+## Set Up Networking: VPC and API Gateway
 ### Steps
-1. **Open the AWS Management Console:**
-   - Navigate to the Elastic Beanstalk service.
-   - Click "Create Application."
-   - Enter the application name (e.g., MyApiApp).
-   - Choose the .NET platform.
-   - Click "Create application."
+1. Create a Virtual Private Cloud (VPC):
+   - In the AWS Management Console, navigate to the VPC service.
+   - Click "Create VPC."
+   - Choose "VPC only" and configure the CIDR block (e.g., `10.0.0.0/16`).
+   - Create subnets within your VPC for different availability zones.
 
-2. **Upload and Deploy the Application:**
-   - Publish the application:
-```bash
-dotnet publish -c Release -o out
-```
-   - Compress the published files:
-```bash
-cd out
-zip -r MyApi.zip .
-```
-   - In the AWS Management Console, navigate to the "Environments" section.
-   - Click "Create environment."
-   - Choose "Web server environment."
-   - Enter the environment name (e.g., MyApiEnv).
-   - For the platform, select ".NET Core."
-   - Under "Application code," choose "Upload your code."
-   - Upload the MyApi.zip file.
-   - Click "Create environment."
+2. Configure Route Table and Internet Gateway:
+   - Create and attach an Internet Gateway to your VPC to allow internet access.
+   - In the Route Tables section, add routes that direct traffic to the Internet Gateway for public subnets.
 
-3. **Update Environment Variables:**
-   - Navigate to the "Configuration" section in your Elastic Beanstalk environment.
-   - Edit the "Software" configuration.
-   - Add the necessary environment variables for your application.
+3. Create and Configure API Gateway:
+   - Navigate to the API Gateway service.
+   - Click "Create API" and select "REST API."
+   - Define an API name and create an HTTP method (e.g., GET, POST) that corresponds to your backend application.
+   - Set the integration type as "HTTP" or "Lambda Function," depending on your application.
+   - For "HTTP" integration, use the public IP or domain of your EC2 instance as the endpoint.
 
-4. **Test the API:**
-   - Navigate to the URL provided by Elastic Beanstalk to ensure your API is running correctly.
+4. Test the API Gateway:
+   - Once configured, test the API Gateway by sending HTTP requests to the API Gateway's URL.
+   - Ensure that it forwards requests correctly to your EC2-hosted backend.
 
-## Deploy Frontend UI
-### Prerequisites
-   - AWS Account
-   - Frontend application built locally (e.g., React app)
-
+## Introduction to IAM and Policies
 ### Steps
-1. **Create an S3 Bucket:**
-   - Open the AWS Management Console and navigate to the S3 service.
-   - Click on the "Create bucket" button.
-   - Enter a unique bucket name.
-   - Choose the AWS region where you want to create the bucket.
-   - Leave the default settings for the remaining options, or configure as needed.
-   - Click "Create bucket".
+1. Understand IAM Basics:
+   - IAM (Identity and Access Management) allows you to control access to AWS resources.
+   - Navigate to the IAM service in the AWS Management Console.
+   - Click on "Users" and create a new user (e.g., Developer).
 
-2. **Upload Frontend Files:**
-   - Build your frontend application locally (assuming it’s a React app):
-```bash
-npm run build
-```
-   - In the AWS Management Console, navigate to the S3 bucket you created.
-   - Click on the "Upload" button.
-   - Click "Add files" and select the files from the build folder.
-   - Click "Upload" to upload the files to the S3 bucket.
+2. Assign Policies to Users:
+   - Attach policies to your new user based on their role (e.g., `AmazonEC2FullAccess` for managing EC2, or `AmazonS3ReadOnlyAccess` for read access to S3).
+   - You can create custom policies if needed by defining specific permissions in JSON format.
 
-3. **Configure Static Website Hosting:**
-   - In the AWS Management Console, navigate to your S3 bucket.
-   - Go to the "Properties" tab.
-   - Scroll down to the "Static website hosting" section.
-   - Click "Edit".
-   - Enable static website hosting.
-   - Set the index document name (e.g., index.html).
-   - (Optional) Set the error document name if needed (e.g., 404.html).
-   - Click "Save changes".
-
-4. **Set Bucket Policy for Public Access:**
-   - Navigate to the "Permissions" tab of your S3 bucket.
-   - Click on "Bucket Policy".
-   - Add the following policy to allow public read access:
-json
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicReadGetObject",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::your-bucket-name/*"
-    }
-  ]
-}
-```
-   - Replace your-bucket-name with the name of your S3 bucket.
-   - Click "Save".
-
-5. **Access the Static Site:**
-   - After configuring static website hosting, note the "Bucket website endpoint" URL provided in the static website hosting section.
+3. Create and Use IAM Roles:
+   - Create an IAM role that your EC2 instance can assume to access other AWS resources (e.g., access to S3, RDS).
+   - Navigate to the "Roles" section and create a new role.
+   - Attach appropriate policies (e.g., `AmazonS3FullAccess`) to this role.
+   - Assign the IAM role to your EC2 instance from the "Actions" menu under "Instance Settings."
