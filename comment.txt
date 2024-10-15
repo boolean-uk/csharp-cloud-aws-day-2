@@ -1,0 +1,1 @@
+I set up the EC2, however could not get the webserver running on the ubuntu unstance.
