@@ -1,8 +1,8 @@
 # My progress
--Made the EC2 resource and got it running
--Connected to it and insalled the .NET SDK and Nginx
--Started Nginx service
--Got stuck at trying to copy over files from host machine.
+- Made the EC2 resource and got it running
+- Connected to it and insalled the .NET SDK and Nginx
+- Started Nginx service
+- Got stuck at trying to copy over files from host machine.
 
 
 # C# Cloud AWS - Day Two
