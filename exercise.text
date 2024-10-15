@@ -1,0 +1,5 @@
+
+- Made the EC2 resource and got it running
+- Got it connected, installed the .NET SDK and Nginx
+- Started the Nginx service
+- Didn't manage to copy over files
