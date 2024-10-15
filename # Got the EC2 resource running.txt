@@ -1,0 +1,4 @@
+# Got the EC2 resource running 
+# Connection worked, and installed Nginx and .NET SDK 
+# Started Nginx 
+# Didnt work past this point 
