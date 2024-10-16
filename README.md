@@ -1,3 +1,5 @@
+PARTIALLY DONE, CREATED UBUNTU INSTANCE, TRANSFERED FILES , RUN INTO ERROR: The maximum number of VPCs has been reached .
+
 # C# Cloud AWS - Day Two
 
 ## Learning Objectives
